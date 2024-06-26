@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sdl2 = "0.37.0"
-rand = "0.8.4"
+sdl2 = "^0.34"
+sdl2_image = "^0.25.0"
+rand = "0.8"
