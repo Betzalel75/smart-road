@@ -1,4 +1,5 @@
 pub mod event;
+pub mod car;
 
 pub use rand::Rng;
 pub use sdl2::pixels::Color;

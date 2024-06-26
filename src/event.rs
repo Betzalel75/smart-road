@@ -1,5 +1,5 @@
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+pub use sdl2::event::Event;
+pub use sdl2::keyboard::Keycode;
 
 use crate::Vehicle;
 use crate::Direction;
