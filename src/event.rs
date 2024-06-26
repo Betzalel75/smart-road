@@ -1,17 +1,19 @@
 pub use sdl2::event::Event;
 pub use sdl2::keyboard::Keycode;
 
+use crate::Position;
 use crate::Vehicle;
 use crate::Direction;
+use std::rc::Rc;
 
-use sdl2::pixels::Color;
+use sdl2::render::*;
 
-pub struct Simulation {
-    pub vehicles: Vec<Vehicle>,
+pub struct Simulation<'a> {
+    pub vehicles: Vec<Vehicle<'a>>,
     pub next_id: u32,
 }
 
-impl Simulation {
+impl<'a> Simulation<'a> {
     pub fn new() -> Self {
         Simulation {
             vehicles: Vec::new(),
@@ -19,19 +21,19 @@ impl Simulation {
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event) {
+    pub fn handle_event(&mut self, event: &Event, texture: Rc<Texture<'a>>) {
         match event {
             Event::KeyDown { keycode: Some(Keycode::Up), .. } => {
-                self.create_vehicle(Direction::North);
+                self.create_vehicle(Direction::North, texture);
             }
             Event::KeyDown { keycode: Some(Keycode::Down), .. } => {
-                self.create_vehicle(Direction::South);
+                self.create_vehicle(Direction::South, texture);
             }
             Event::KeyDown { keycode: Some(Keycode::Left), .. } => {
-                self.create_vehicle(Direction::West);
+                self.create_vehicle(Direction::West, texture);
             }
             Event::KeyDown { keycode: Some(Keycode::Right), .. } => {
-                self.create_vehicle(Direction::East);
+                self.create_vehicle(Direction::East, texture);
             }
             Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                 self.print_statistics();
@@ -41,15 +43,15 @@ impl Simulation {
         }
     }
 
-    pub fn create_vehicle(&mut self, direction: Direction) {
+    pub fn create_vehicle(&mut self, direction: Direction, texture: Rc<Texture<'a>>) {
         let position = match direction {
-            Direction::North => (400.0, 800.0),
-            Direction::South => (400.0, 0.0),
-            Direction::East  => (0.0, 400.0),
-            Direction::West  => (800.0, 400.0),
-            _ => (0.0, 0.0),
+            Direction::North => Position{x:400.0, y:800.0},
+            Direction::South => Position{x:400.0, y:0.0},
+            Direction::East  => Position{x:0.0, y:400.0},
+            Direction::West  => Position{x:800.0, y:400.0},
+            _ => Position{x:0.0, y:0.0},
         };
-        let vehicle = Vehicle::new(self.next_id, position, direction);
+        let vehicle = Vehicle::new(self.next_id, position, direction, texture);
         self.vehicles.push(vehicle);
         self.next_id += 1;
     }
@@ -60,9 +62,9 @@ impl Simulation {
         }
     }
 
-    pub fn draw(&self, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
-        canvas.set_draw_color(Color::WHITE);
+    pub fn draw(&self, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>, background_texture: &sdl2::render::Texture) {
         canvas.clear();
+        canvas.copy(&background_texture, None, None).expect("Failed to copy background texture");
         for vehicle in &self.vehicles {
             vehicle.draw(canvas);
         }

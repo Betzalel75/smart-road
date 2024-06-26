@@ -1,9 +1,9 @@
 use sdl2::render::{Texture, Canvas};
 use sdl2::video::Window;
 use sdl2::rect::Rect;
-
+use std::rc::Rc;
 pub struct Car<'a> {
-    texture: Texture<'a>,
+    texture: Rc<Texture<'a>>,
     pub x: i32,
     pub y: i32,
     pub direction: DirectionCar,
@@ -17,7 +17,7 @@ pub enum DirectionCar {
 }
 
 impl<'a> Car<'a> {
-    pub fn new(texture: Texture<'a>, x: i32, y: i32, direction: DirectionCar) -> Car<'a> {
+    pub fn new(texture: Rc<Texture<'a>>, x: i32, y: i32, direction: DirectionCar) -> Car<'a> {
         Car { texture, x, y, direction }
     }
 
