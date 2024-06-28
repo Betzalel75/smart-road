@@ -87,12 +87,18 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         self.position.y -= self.velocity;
+                        if self.position.y < 800.0 {
+                            self.finish = true;
+                        }
                     }
                     DirectionPath::TurnLeft => {
                         if !self.check_turn {
                             self.position.y -= self.velocity;
                         } else {
                             self.position.x -= self.velocity; // Ou autre logique
+                            if self.position.x < 800.0{
+                                self.finish = true;
+                            }
                         }
                         if self.position.y < 337.0 && !self.check_turn {
                             self.check_turn = true;
@@ -104,6 +110,9 @@ impl<'a> Vehicle<'a> {
                             self.position.y -= self.velocity;
                         } else {
                             self.position.x += self.velocity; // Ou autre logique
+                            if self.position.x > 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.y <= 463.0 && !self.check_turn {
@@ -117,12 +126,18 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         self.position.y += self.velocity;
+                        if self.position.y > 800.0 {
+                            self.finish = true;
+                        }
                     }
                     DirectionPath::TurnLeft => {
                         if !self.check_turn {
                             self.position.y += self.velocity;
                         } else {
                             self.position.x += self.velocity;
+                            if self.position.x > 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.y > 379.0 && !self.check_turn {
@@ -135,6 +150,9 @@ impl<'a> Vehicle<'a> {
                             self.position.y += self.velocity;
                         } else {
                             self.position.x -= self.velocity; // Ou autre logique
+                            if self.position.x < 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.y > 248.0 && !self.check_turn {
@@ -148,12 +166,18 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         self.position.x += self.velocity;
+                        if self.position.x > 800.0 {
+                            self.finish = true;
+                        }
                     }
                     DirectionPath::TurnLeft => {
                         if !self.check_turn {
                             self.position.x += self.velocity;
                         } else {
                             self.position.y -= self.velocity;
+                            if self.position.y < 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.x >= 400.0 && !self.check_turn {
@@ -166,6 +190,9 @@ impl<'a> Vehicle<'a> {
                             self.position.x += self.velocity;
                         } else {
                             self.position.y += self.velocity;
+                            if self.position.y > 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.x >= 270.0 && !self.check_turn {
@@ -179,12 +206,18 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         self.position.x -= self.velocity;
+                        if self.position.x < 800.0 {
+                            self.finish = true;
+                        }
                     }
                     DirectionPath::TurnLeft => {
                         if !self.check_turn {
                             self.position.x -= self.velocity;
                         } else {
                             self.position.y += self.velocity;
+                            if self.position.y > 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.x <= 350.0 && !self.check_turn {
@@ -197,6 +230,9 @@ impl<'a> Vehicle<'a> {
                             self.position.x -= self.velocity;
                         } else {
                             self.position.y -= self.velocity;
+                            if self.position.y < 800.0 {
+                                self.finish = true;
+                            }
                         }
 
                         if self.position.x <= 486.0 && !self.check_turn {
@@ -230,5 +266,89 @@ impl<'a> Vehicle<'a> {
                 }
             }
         }
+    }
+}
+
+pub fn check_and_prevent_collision(vehicles: &mut [Vehicle]) {
+    for i in 0..vehicles.len() {
+        for j in 0..vehicles.len() {
+            if i != j {
+                if can_collide(&vehicles[i], &vehicles[j]) {
+                    let distance = vehicles[i].position.distance(&vehicles[j].position);
+                    if distance < 80.0 { 
+                        if vehicles[i].velocity >= 2.0 {
+                            vehicles[i].velocity -= 1.0; // Le véhicule i ralentit
+                        }
+                        vehicles[j].velocity += 1.0; // Le véhicule j accélère
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn can_collide(vehicle1: &Vehicle, vehicle2: &Vehicle) -> bool {
+    match vehicle1.direction {
+        Direction::North(DirectionPath::TurnLeft) => matches!(
+            vehicle2.direction,
+            Direction::South(DirectionPath::TurnLeft)
+            | Direction::South(DirectionPath::GoStraight)
+            | Direction::West(DirectionPath::TurnLeft)
+            | Direction::East(DirectionPath::GoStraight)
+            | Direction::East(DirectionPath::TurnLeft)
+        ),
+        Direction::North(DirectionPath::GoStraight) => matches!(
+            vehicle2.direction,
+            Direction::South(DirectionPath::TurnLeft)
+            | Direction::West(DirectionPath::GoStraight)
+            | Direction::West(DirectionPath::TurnLeft)
+            | Direction::East(DirectionPath::GoStraight)
+        ),
+        Direction::South(DirectionPath::TurnLeft) => matches!(
+            vehicle2.direction,
+            Direction::West(DirectionPath::TurnLeft)
+            | Direction::West(DirectionPath::GoStraight)
+            | Direction::North(DirectionPath::TurnLeft)
+            | Direction::East(DirectionPath::GoStraight)
+            | Direction::East(DirectionPath::TurnLeft)
+        ),
+        Direction::South(DirectionPath::GoStraight) => matches!(
+            vehicle2.direction,
+            Direction::East(DirectionPath::TurnLeft)
+            | Direction::East(DirectionPath::GoStraight)
+            | Direction::North(DirectionPath::TurnLeft)
+            | Direction::West(DirectionPath::GoStraight)
+        ),
+        Direction::East(DirectionPath::TurnLeft) => matches!(
+            vehicle2.direction,
+            Direction::South(DirectionPath::TurnLeft)
+            | Direction::South(DirectionPath::GoStraight)
+            | Direction::West(DirectionPath::TurnLeft)
+            | Direction::West(DirectionPath::GoStraight)
+            | Direction::North(DirectionPath::TurnLeft)
+        ),
+        Direction::East(DirectionPath::GoStraight) => matches!(
+            vehicle2.direction,
+            Direction::West(DirectionPath::TurnLeft)
+            | Direction::South(DirectionPath::GoStraight)
+            | Direction::North(DirectionPath::TurnLeft)
+            | Direction::North(DirectionPath::GoStraight)
+        ),
+        Direction::West(DirectionPath::TurnLeft) => matches!(
+            vehicle2.direction,
+            Direction::South(DirectionPath::TurnLeft)
+            | Direction::South(DirectionPath::GoStraight)
+            | Direction::East(DirectionPath::TurnLeft)
+            | Direction::North(DirectionPath::GoStraight)
+            | Direction::North(DirectionPath::TurnLeft)
+        ),
+        Direction::West(DirectionPath::GoStraight) => matches!(
+            vehicle2.direction,
+            Direction::South(DirectionPath::TurnLeft)
+            | Direction::South(DirectionPath::GoStraight)
+            | Direction::East(DirectionPath::TurnLeft)
+            | Direction::North(DirectionPath::GoStraight)
+        ),
+        _ => false,
     }
 }

@@ -18,6 +18,7 @@ pub struct Simulation<'a> {
     pub last_d_press: Instant,
     pub last_l_press: Instant,
     pub last_rt_press: Instant,
+    pub last_random_press: Instant,
 }
 
 impl<'a> Simulation<'a> {
@@ -30,6 +31,7 @@ impl<'a> Simulation<'a> {
             last_l_press: Instant::now(),
             last_r_press: Instant::now(),
             last_rt_press: Instant::now(),
+            last_random_press: Instant::now(),
         }
     }
 
@@ -82,7 +84,24 @@ impl<'a> Simulation<'a> {
                 keycode: Some(Keycode::Escape),
                 ..
             } => {
-                // self.print_statistics();
+                self.print_statistics();
+                std::process::exit(0);
+            }
+            Event::KeyDown { keycode: Some(Keycode::R), ..}=>{
+                let mut rnd = rand::thread_rng();
+                let direction = match rnd.gen_range(1..=4) {
+                    1 => Direction::North(path),
+                    2 => Direction::South(path),
+                    3 => Direction::East(path),
+                    4 => Direction::West(path),
+                    _ => Direction::East(path),
+                };
+                if self.last_random_press.elapsed() >= Duration::from_secs(2) {
+                    self.create_vehicle(direction, texture, path);
+                    self.last_random_press = Instant::now()
+                }
+            }
+            Event::Quit {..} =>{
                 std::process::exit(0);
             }
             _ => {}
@@ -144,10 +163,10 @@ impl<'a> Simulation<'a> {
 
     pub fn update(&mut self) {
         for i in 0..self.vehicles.len() {
-            self.vehicles.retain(|cars| !cars.finish);
-            let (left, right) = self.vehicles.split_at_mut(i);
+            // self.vehicles.retain(|cars| !cars.finish);
+            let (_left, right) = self.vehicles.split_at_mut(i);
             let vehicle = &mut right[0];
-            vehicle.avoid_collision(left);
+            // vehicle.avoid_collision(left);
             vehicle.update_position();
         }
     }

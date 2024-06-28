@@ -1,6 +1,6 @@
 use smart_road::*;
 extern crate sdl2;
-
+use std::thread;
 use event::Simulation;
 use sdl2::image::LoadTexture;
 use std::time::Duration;
@@ -22,14 +22,18 @@ fn main() -> Result<(), String> {
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut simulation = Simulation::new();
+
     loop {
         for event in event_pump.poll_iter() {
             simulation.handle_event(&event, Rc::clone(&car_texture));
         }
 
         simulation.update();
+        if simulation.vehicles.len() > 0 {
+            check_and_prevent_collision(&mut simulation.vehicles);
+        }
         simulation.draw(&mut canvas, &background_texture);
-
-        ::std::thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(100));
     }
+    
 }
