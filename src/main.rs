@@ -1,9 +1,10 @@
 use smart_road::*;
+use utils::func::check_and_prevent_collision;
 extern crate sdl2;
 use std::thread;
 use event::Simulation;
 use sdl2::image::LoadTexture;
-use std::time::Duration;
+
 
 
 fn main() -> Result<(), String> {

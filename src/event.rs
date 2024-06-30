@@ -2,16 +2,18 @@ use crate::Direction;
 use crate::DirectionPath;
 use crate::Position;
 use crate::Vehicle;
-pub use rand::Rng;
-pub use sdl2::event::Event;
-pub use sdl2::keyboard::Keycode;
+use crate::utils::func::{bigger,smallest};
+use rand::Rng;
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
 use sdl2::messagebox::*;
 use sdl2::render::*;
+use std::collections::HashMap;
 use std::rc::Rc;
-pub use std::time::{Duration, Instant};
-
+use std::time::{Duration, Instant};
 pub struct Simulation<'a> {
     pub vehicles: Vec<Vehicle<'a>>,
+    nbr_vehicles: usize,
     pub next_id: u32,
     pub last_r_press: Instant,
     pub last_u_press: Instant,
@@ -19,12 +21,15 @@ pub struct Simulation<'a> {
     pub last_l_press: Instant,
     pub last_rt_press: Instant,
     pub last_random_press: Instant,
+    min_velocity: HashMap<u32, f32>,
+    max_velocity: HashMap<u32, f32>,
 }
 
 impl<'a> Simulation<'a> {
     pub fn new() -> Self {
         Simulation {
             vehicles: Vec::new(),
+            nbr_vehicles: 0,
             next_id: 0,
             last_u_press: Instant::now(),
             last_d_press: Instant::now(),
@@ -32,6 +37,8 @@ impl<'a> Simulation<'a> {
             last_r_press: Instant::now(),
             last_rt_press: Instant::now(),
             last_random_press: Instant::now(),
+            min_velocity: HashMap::new(),
+            max_velocity: HashMap::new(),
         }
     }
 
@@ -49,7 +56,7 @@ impl<'a> Simulation<'a> {
                 ..
             } => {
                 if self.last_u_press.elapsed() >= Duration::from_secs(2) {
-                    self.create_vehicle(Direction::North(path), texture, path);
+                    self.create_vehicle(Direction::North(path), texture);
                     self.last_u_press = Instant::now()
                 }
             }
@@ -58,7 +65,7 @@ impl<'a> Simulation<'a> {
                 ..
             } => {
                 if self.last_d_press.elapsed() >= Duration::from_secs(2) {
-                    self.create_vehicle(Direction::South(path), texture, path);
+                    self.create_vehicle(Direction::South(path), texture);
                     self.last_d_press = Instant::now()
                 }
             }
@@ -67,7 +74,7 @@ impl<'a> Simulation<'a> {
                 ..
             } => {
                 if self.last_l_press.elapsed() >= Duration::from_secs(2) {
-                    self.create_vehicle(Direction::West(path), texture, path);
+                    self.create_vehicle(Direction::West(path), texture);
                     self.last_l_press = Instant::now()
                 }
             }
@@ -76,7 +83,7 @@ impl<'a> Simulation<'a> {
                 ..
             } => {
                 if self.last_rt_press.elapsed() >= Duration::from_secs(2) {
-                    self.create_vehicle(Direction::East(path), texture, path);
+                    self.create_vehicle(Direction::East(path), texture);
                     self.last_rt_press = Instant::now()
                 }
             }
@@ -97,7 +104,7 @@ impl<'a> Simulation<'a> {
                     _ => Direction::East(path),
                 };
                 if self.last_random_press.elapsed() >= Duration::from_secs(2) {
-                    self.create_vehicle(direction, texture, path);
+                    self.create_vehicle(direction, texture);
                     self.last_random_press = Instant::now()
                 }
             }
@@ -108,12 +115,10 @@ impl<'a> Simulation<'a> {
         }
     }
 
-    pub fn create_vehicle(
-        &mut self,
-        direction: Direction,
-        texture: Rc<Texture<'a>>,
-        _path: DirectionPath,
-    ) {
+    pub fn create_vehicle(&mut self,direction: Direction,texture: Rc<Texture<'a>>) {
+        if self.vehicles.len() == 9 {
+            return;
+        }
         let position = match direction {
             Direction::North(path) => match path {
                 DirectionPath::TurnLeft => Position { x: 400.0, y: 800.0 },
@@ -146,28 +151,47 @@ impl<'a> Simulation<'a> {
             }, // ←
         };
         // Utilisation de filter pour vérifier la distance
+        let vehicle = Vehicle::new(self.next_id, position, direction, texture);
         let close_vehicles: Vec<&Vehicle> = self
             .vehicles
             .iter()
-            .filter(|vehicle| {
-                vehicle.direction == direction && vehicle.position.distance(&position) <= 130.0
+            .filter(|car| {
+                car.direction == vehicle.direction && car.path == vehicle.path && car.distance_between_vehicle(&vehicle)
             })
             .collect();
 
         if close_vehicles.is_empty() {
-            let vehicle = Vehicle::new(self.next_id, position, direction, texture);
+            self.insert_velocity(&vehicle);
             self.vehicles.push(vehicle);
+            self.nbr_vehicles += 1;
             self.next_id += 1;
         }
     }
 
     pub fn update(&mut self) {
+        self.vehicles.retain(|cars| !cars.finish);
         for i in 0..self.vehicles.len() {
-            // self.vehicles.retain(|cars| !cars.finish);
-            let (_left, right) = self.vehicles.split_at_mut(i);
+            let (left, right) = self.vehicles.split_at_mut(i);
             let vehicle = &mut right[0];
-            // vehicle.avoid_collision(left);
+            vehicle.avoid_collision(left);
             vehicle.update_position();
+        }
+    }
+
+    fn insert_velocity(&mut self, vehicle: &Vehicle){
+        if let Some(min_velocity) = self.min_velocity.get(&vehicle.id) {
+            if vehicle.velocity < *min_velocity {
+                self.min_velocity.insert(vehicle.id, vehicle.velocity);
+            }
+        } else {
+            self.min_velocity.insert(vehicle.id, vehicle.velocity);
+        }
+        if let Some(max_velocity) = self.max_velocity.get(&vehicle.id) {
+            if vehicle.velocity > *max_velocity {
+                self.max_velocity.insert(vehicle.id, vehicle.velocity);
+            }
+        } else {
+            self.max_velocity.insert(vehicle.id, vehicle.velocity);
         }
     }
 
@@ -186,22 +210,16 @@ impl<'a> Simulation<'a> {
         canvas.present();
     }
 
-    pub fn print_statistics(&self) {
+    fn print_statistics(&self) {
         let mut statistics = String::new();
-        statistics.push_str(&format!("Nombre de véhicules: {}\n", self.vehicles.len()));
-        if let Some(max_velocity) = self
-            .vehicles
-            .iter()
-            .max_by(|a, b| a.velocity.partial_cmp(&b.velocity).unwrap())
+        statistics.push_str(&format!("Nombre de véhicules: {}\n", self.nbr_vehicles));
+        if let Some(max_velocity) = bigger(&self.max_velocity)
         {
-            statistics.push_str(&format!("Vitesse maximale: {}\n", max_velocity.velocity));
+            statistics.push_str(&format!("Vitesse maximale: {}\n", max_velocity));
         }
-        if let Some(min_velocity) = self
-            .vehicles
-            .iter()
-            .min_by(|a, b| a.velocity.partial_cmp(&b.velocity).unwrap())
+        if let Some(min_velocity) = smallest(&self.min_velocity)
         {
-            statistics.push_str(&format!("Vitesse minimale: {}\n", min_velocity.velocity));
+            statistics.push_str(&format!("Vitesse minimale: {}\n", min_velocity));
         }
         if let Some(max_time) = self.vehicles.iter().max_by(|a, b| {
             a.time_in_intersection
@@ -233,3 +251,4 @@ impl<'a> Simulation<'a> {
         .unwrap();
     }
 }
+
