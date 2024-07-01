@@ -5,8 +5,6 @@ use std::thread;
 use event::Simulation;
 use sdl2::image::LoadTexture;
 
-
-
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -28,13 +26,11 @@ fn main() -> Result<(), String> {
         for event in event_pump.poll_iter() {
             simulation.handle_event(&event, Rc::clone(&car_texture));
         }
-
-        simulation.update();
         if simulation.vehicles.len() > 0 {
             check_and_prevent_collision(&mut simulation.vehicles);
         }
+        simulation.update();
         simulation.draw(&mut canvas, &background_texture);
         thread::sleep(Duration::from_millis(100));
     }
-    
 }

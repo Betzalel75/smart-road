@@ -1,6 +1,5 @@
 pub mod event;
 pub mod utils;
-
 use rand::Rng;
 use sdl2::rect::Rect;
 use sdl2::render::Texture;
@@ -9,6 +8,9 @@ pub use std::time::{Duration, Instant};
 pub const WIDTH: u32 = 800;
 pub const HEIGHT: u32 = 800;
 pub const SAFE_DISTANCE: f64 = 130.0;
+pub const VEHICLE_HEIGHT:u32 = 100;
+pub const VEHICLE_WIDTH:u32 = 50;
+const STOP_DELAY: Duration = Duration::from_secs(3);
 
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
@@ -85,10 +87,9 @@ impl<'a> Vehicle<'a> {
             },
         };
         let mut rng = rand::thread_rng();
-        let velocity = match rng.gen_range(1..=3) {
+        let velocity = match rng.gen_range(1..=2) {
             1 => 3.0,
-            2 => 5.0,
-            3 => 7.0,
+            2 => 9.0,
             _ => 3.0, // Par défaut
         };
         Vehicle {
@@ -124,7 +125,7 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         if self.has_slowed_down
-                            && self.last_stop.elapsed() >= Duration::from_secs(3)
+                            && self.last_stop.elapsed() >= STOP_DELAY
                         {
                             self.velocity = self.origin_velocity;
                         }
@@ -139,7 +140,7 @@ impl<'a> Vehicle<'a> {
                     }
                     DirectionPath::TurnLeft => {
                         if self.has_slowed_down
-                            && self.last_stop.elapsed() >= Duration::from_secs(3)
+                            && self.last_stop.elapsed() >= STOP_DELAY
                         {
                             self.velocity = self.origin_velocity;
                         }
@@ -150,7 +151,7 @@ impl<'a> Vehicle<'a> {
                                 self.velocity = 7.0;
                                 self.has_slowed_down = false;
                             }
-                            self.position.x -= self.velocity; // Ou autre logique
+                            self.position.x -= self.velocity; 
                             if self.position.x < -30.0 {
                                 self.finish = true;
                             }
@@ -164,7 +165,7 @@ impl<'a> Vehicle<'a> {
                         if !self.check_turn {
                             self.position.y -= self.velocity;
                         } else {
-                            self.position.x += self.velocity; // Ou autre logique
+                            self.position.x += self.velocity; 
                             if self.position.x > 800.0 {
                                 self.finish = true;
                             }
@@ -181,7 +182,7 @@ impl<'a> Vehicle<'a> {
                 match path {
                     DirectionPath::GoStraight => {
                         if self.has_slowed_down
-                            && self.last_stop.elapsed() >= Duration::from_secs(3)
+                            && self.last_stop.elapsed() >= STOP_DELAY
                         {
                             self.velocity = self.origin_velocity;
                         }
@@ -196,7 +197,7 @@ impl<'a> Vehicle<'a> {
                     }
                     DirectionPath::TurnLeft => {
                         if self.has_slowed_down
-                            && self.last_stop.elapsed() >= Duration::from_secs(3)
+                            && self.last_stop.elapsed() >= STOP_DELAY
                         {
                             self.velocity = self.origin_velocity;
                         }
@@ -237,7 +238,7 @@ impl<'a> Vehicle<'a> {
             }
             Direction::East(path) => match path {
                 DirectionPath::GoStraight => {
-                    if self.has_slowed_down && self.last_stop.elapsed() >= Duration::from_secs(3) {
+                    if self.has_slowed_down && self.last_stop.elapsed() >= STOP_DELAY {
                         self.velocity = self.origin_velocity;
                     }
                     if self.position.x >= 486.0 {
@@ -250,7 +251,7 @@ impl<'a> Vehicle<'a> {
                     }
                 }
                 DirectionPath::TurnLeft => {
-                    if self.has_slowed_down && self.last_stop.elapsed() >= Duration::from_secs(3) {
+                    if self.has_slowed_down && self.last_stop.elapsed() >= STOP_DELAY {
                         self.velocity = self.origin_velocity;
                     }
                     if !self.check_turn {
@@ -289,7 +290,7 @@ impl<'a> Vehicle<'a> {
             },
             Direction::West(path) => match path {
                 DirectionPath::GoStraight => {
-                    if self.has_slowed_down && self.last_stop.elapsed() >= Duration::from_secs(3) {
+                    if self.has_slowed_down && self.last_stop.elapsed() >= STOP_DELAY {
                         self.velocity = self.origin_velocity;
                     }
                     if self.position.x <= 240.0 {
@@ -302,7 +303,7 @@ impl<'a> Vehicle<'a> {
                     }
                 }
                 DirectionPath::TurnLeft => {
-                    if self.has_slowed_down && self.last_stop.elapsed() >= Duration::from_secs(3) {
+                    if self.has_slowed_down && self.last_stop.elapsed() >= STOP_DELAY {
                         self.velocity = self.origin_velocity;
                     }
                     if !self.check_turn {
@@ -359,7 +360,7 @@ impl<'a> Vehicle<'a> {
     }
 
     fn draw(&self, canvas: &mut sdl2::render::Canvas<sdl2::video::Window>) {
-        let rect = Rect::new(self.position.x as i32, self.position.y as i32, 50, 100);
+        let rect = Rect::new(self.position.x as i32, self.position.y as i32, VEHICLE_WIDTH, VEHICLE_HEIGHT);
         canvas
             .copy_ex(
                 &self.texture,
@@ -383,15 +384,17 @@ impl<'a> Vehicle<'a> {
                         self.velocity = other.velocity;
                     }
                 }
+            }else{
+                continue;
             }
         }
     }
     fn collision_vehicle(&self, other: &Vehicle)->bool{
-        let vehicle_height:f32 = 50.0;
-        let vehicle_width:f32 = 100.0;
+        let vehicle_height:f32 = VEHICLE_HEIGHT as f32;
+        let vehicle_width:f32 = VEHICLE_WIDTH as f32;
         self.position.x - (SAFE_DISTANCE as f32) < other.position.x + vehicle_height + (SAFE_DISTANCE as f32) &&
-        self.position.x + 100.0 > other.position.x &&
+        self.position.x + vehicle_width > other.position.x &&
         self.position.y - (SAFE_DISTANCE as f32) < other.position.y + vehicle_width + (SAFE_DISTANCE as f32) &&
-        self.position.y + 50.0 > other.position.y
+        self.position.y + vehicle_height > other.position.y
     }
 }

@@ -11,6 +11,7 @@ use sdl2::render::*;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
+const INPUT_DELAY: Duration = Duration::from_secs(2);
 pub struct Simulation<'a> {
     pub vehicles: Vec<Vehicle<'a>>,
     nbr_vehicles: usize,
@@ -55,7 +56,7 @@ impl<'a> Simulation<'a> {
                 keycode: Some(Keycode::Up),
                 ..
             } => {
-                if self.last_u_press.elapsed() >= Duration::from_secs(2) {
+                if self.last_u_press.elapsed() >= INPUT_DELAY {
                     self.create_vehicle(Direction::North(path), texture);
                     self.last_u_press = Instant::now()
                 }
@@ -64,7 +65,7 @@ impl<'a> Simulation<'a> {
                 keycode: Some(Keycode::Down),
                 ..
             } => {
-                if self.last_d_press.elapsed() >= Duration::from_secs(2) {
+                if self.last_d_press.elapsed() >= INPUT_DELAY {
                     self.create_vehicle(Direction::South(path), texture);
                     self.last_d_press = Instant::now()
                 }
@@ -73,7 +74,7 @@ impl<'a> Simulation<'a> {
                 keycode: Some(Keycode::Left),
                 ..
             } => {
-                if self.last_l_press.elapsed() >= Duration::from_secs(2) {
+                if self.last_l_press.elapsed() >= INPUT_DELAY {
                     self.create_vehicle(Direction::West(path), texture);
                     self.last_l_press = Instant::now()
                 }
@@ -82,7 +83,7 @@ impl<'a> Simulation<'a> {
                 keycode: Some(Keycode::Right),
                 ..
             } => {
-                if self.last_rt_press.elapsed() >= Duration::from_secs(2) {
+                if self.last_rt_press.elapsed() >= INPUT_DELAY {
                     self.create_vehicle(Direction::East(path), texture);
                     self.last_rt_press = Instant::now()
                 }
@@ -103,7 +104,7 @@ impl<'a> Simulation<'a> {
                     4 => Direction::West(path),
                     _ => Direction::East(path),
                 };
-                if self.last_random_press.elapsed() >= Duration::from_secs(2) {
+                if self.last_random_press.elapsed() >= INPUT_DELAY {
                     self.create_vehicle(direction, texture);
                     self.last_random_press = Instant::now()
                 }
@@ -251,4 +252,3 @@ impl<'a> Simulation<'a> {
         .unwrap();
     }
 }
-
