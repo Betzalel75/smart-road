@@ -205,7 +205,7 @@ impl<'a> Simulation<'a> {
 
         for vehicle in self.vehicles.clone() {
             self.insert_velocity(&vehicle);
-            if vehicle.is_out {
+            if vehicle.finish {
                 self.insert_time(&vehicle);
             }
             let val = vehicle.close_calls.values();

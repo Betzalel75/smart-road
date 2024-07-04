@@ -8,7 +8,7 @@ use std::collections::HashMap;
 pub use std::rc::Rc;
 use std::time::Instant;
 
-const FRONT_RECT_LENGTH: u32 = 120;
+const FRONT_RECT_LENGTH: u32 = 160;
 pub const SAFE_DISTANCE: f64 = 40.0;
 pub const VEHICLE_HEIGHT: u32 = 40;
 pub const VEHICLE_WIDTH: u32 = 20;
@@ -39,6 +39,7 @@ pub struct Vehicle<'a> {
     pub finish: bool,
     last_stop: Instant,
     time_in_inter: f32,
+    time_in_road: f32,
     is_out: bool,
     sensor: Sensor,
     start_time: Instant,
@@ -52,7 +53,7 @@ pub struct Sensor {
     pub position: Position,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Direction {
     North(DirectionPath),
     South(DirectionPath),
@@ -60,7 +61,7 @@ pub enum Direction {
     West(DirectionPath),
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DirectionPath {
     TurnLeft,
     TurnRight,
@@ -102,6 +103,7 @@ impl<'a> Vehicle<'a> {
             is_out: false,
             last_stop: Instant::now(),
             time_in_inter: 0.0,
+            time_in_road: 0.0,
             sensor: Sensor {
                 w: 0,
                 h: 0,
@@ -120,7 +122,7 @@ impl<'a> Vehicle<'a> {
             Direction::North(path) => match path {
                 DirectionPath::GoStraight => {
                     if self.position.y <= 219.0 {
-                        self.is_out=true;
+                        self.is_out = true;
                         self.velocity = 24.0;
                     }
                     self.position.y -= self.velocity;
@@ -133,7 +135,7 @@ impl<'a> Vehicle<'a> {
                         self.position.y -= self.velocity;
                     } else {
                         if self.position.x <= 240.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.x -= self.velocity;
@@ -142,6 +144,19 @@ impl<'a> Vehicle<'a> {
                         }
                     }
                     if self.position.y <= 370.0 && !self.check_turn {
+                        let (x, y, w, h) = (
+                            (((self.position.x - self.velocity)
+                                - ((FRONT_RECT_LENGTH as f32) + 10.0))
+                                as i32)
+                                .abs(),
+                            (((self.position.y as i32) + 10) - 5).abs(),
+                            FRONT_RECT_LENGTH,
+                            30,
+                        );
+                        self.sensor.w = w;
+                        self.sensor.h = h;
+                        self.sensor.position.x = x as f32;
+                        self.sensor.position.y = y as f32;
                         self.check_turn = true;
                         self.angle -= 90.0;
                     }
@@ -151,7 +166,7 @@ impl<'a> Vehicle<'a> {
                         self.position.y -= self.velocity;
                     } else {
                         if self.position.x >= 793.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.x += self.velocity;
@@ -169,7 +184,7 @@ impl<'a> Vehicle<'a> {
             Direction::South(path) => match path {
                 DirectionPath::GoStraight => {
                     if self.position.y >= 793.0 {
-                        self.is_out=true;
+                        self.is_out = true;
                         self.velocity = 24.0;
                     }
                     self.position.y += self.velocity;
@@ -182,7 +197,7 @@ impl<'a> Vehicle<'a> {
                         self.position.y += self.velocity;
                     } else {
                         if self.position.x >= 793.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.x += self.velocity;
@@ -191,7 +206,17 @@ impl<'a> Vehicle<'a> {
                         }
                     }
 
-                    if self.position.y > 400.0 && !self.check_turn {
+                    if self.position.y >= 400.0 && !self.check_turn {
+                        let (x, y, w, h) = (
+                            (((self.position.x+self.velocity) as i32) - 5).abs(),
+                            (self.position.y as i32) + 40,
+                            30,
+                            FRONT_RECT_LENGTH,
+                        );
+                        self.sensor.w = w;
+                        self.sensor.h = h;
+                        self.sensor.position.x = x as f32;
+                        self.sensor.position.y = y as f32;
                         self.check_turn = true;
                         self.angle -= 90.0;
                     }
@@ -201,7 +226,7 @@ impl<'a> Vehicle<'a> {
                         self.position.y += self.velocity;
                     } else {
                         if self.position.x <= 240.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.x -= self.velocity;
@@ -219,7 +244,7 @@ impl<'a> Vehicle<'a> {
             Direction::East(path) => match path {
                 DirectionPath::GoStraight => {
                     if self.position.x >= 793.0 {
-                        self.is_out=true;
+                        self.is_out = true;
                         self.velocity = 24.0;
                     }
                     self.position.x += self.velocity;
@@ -232,7 +257,7 @@ impl<'a> Vehicle<'a> {
                         self.position.x += self.velocity;
                     } else {
                         if self.position.y <= 219.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.y -= self.velocity;
@@ -242,6 +267,16 @@ impl<'a> Vehicle<'a> {
                     }
 
                     if self.position.x >= 400.0 && !self.check_turn {
+                        let (x, y, w, h) = (
+                            (self.position.x + 30.0) as i32,
+                            ((((self.position.y - self.velocity) as i32) + 10) - 5).abs(),
+                            FRONT_RECT_LENGTH,
+                            30,
+                        );
+                        self.sensor.w = w;
+                        self.sensor.h = h;
+                        self.sensor.position.x = x as f32;
+                        self.sensor.position.y = y as f32;
                         self.check_turn = true;
                         self.angle -= 90.0;
                     }
@@ -251,7 +286,7 @@ impl<'a> Vehicle<'a> {
                         self.position.x += self.velocity;
                     } else {
                         if self.position.x >= 793.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.y += self.velocity;
@@ -269,7 +304,7 @@ impl<'a> Vehicle<'a> {
             Direction::West(path) => match path {
                 DirectionPath::GoStraight => {
                     if self.position.x <= 240.0 {
-                        self.is_out=true;
+                        self.is_out = true;
                         self.velocity = 24.0;
                     }
                     self.position.x -= self.velocity;
@@ -282,7 +317,7 @@ impl<'a> Vehicle<'a> {
                         self.position.x -= self.velocity;
                     } else {
                         if self.position.y >= 796.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.y += self.velocity;
@@ -291,6 +326,16 @@ impl<'a> Vehicle<'a> {
                         }
                     }
                     if self.position.x <= 375.0 && !self.check_turn {
+                        let (x, y, w, h) = (
+                            ((self.position.x - ((FRONT_RECT_LENGTH as f32) + 10.0)) as i32).abs(),
+                            ((((self.position.y+self.velocity) as i32) + 10) - 5).abs(),
+                            FRONT_RECT_LENGTH,
+                            30,
+                        );
+                        self.sensor.w = w;
+                        self.sensor.h = h;
+                        self.sensor.position.x = x as f32;
+                        self.sensor.position.y = y as f32;
                         self.check_turn = true;
                         self.angle -= 90.0;
                     }
@@ -300,7 +345,7 @@ impl<'a> Vehicle<'a> {
                         self.position.x -= self.velocity;
                     } else {
                         if self.position.y <= 219.0 {
-                            self.is_out=true;
+                            self.is_out = true;
                             self.velocity = 24.0;
                         }
                         self.position.y -= self.velocity;
@@ -316,11 +361,12 @@ impl<'a> Vehicle<'a> {
                 }
             },
         }
+        self.time_in_road += 1.0;
         if self.in_intersection() {
             self.time_in_inter += 1.0;
         }
 
-        if self.time_in_inter == 1.0{
+        if self.time_in_road == 1.0 {
             self.start_time = Instant::now(); // start decompting
         }
 
@@ -343,15 +389,6 @@ impl<'a> Vehicle<'a> {
             vehicle_width,
             vehicle_height,
         );
-        canvas.copy_ex(&self.texture,
-                None,
-                Some(rect),
-                self.angle,
-                None,
-                false,
-                false,
-            )
-            .unwrap();
 
         let check = match self.direction {
             Direction::West(path) => match path {
@@ -384,9 +421,20 @@ impl<'a> Vehicle<'a> {
             // Activer le mode de blending pour la transparence
             canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-            canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 0, 0, 0));
+            canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 0, 0, 120));
             canvas.fill_rect(front_rect).unwrap();
         }
+        canvas
+            .copy_ex(
+                &self.texture,
+                None,
+                Some(rect),
+                self.angle,
+                None,
+                false,
+                false,
+            )
+            .unwrap();
     }
 
     fn move_sensor(&mut self) {
@@ -395,75 +443,75 @@ impl<'a> Vehicle<'a> {
                 DirectionPath::TurnLeft => {
                     if self.position.x <= 375.0 {
                         (
-                            self.position.x as i32,
+                            (5 - self.position.x as i32).abs(),
                             (self.position.y as i32) + 40,
-                            20,
+                            30,
                             FRONT_RECT_LENGTH,
                         )
                     } else {
                         (
-                            (self.position.x - ((FRONT_RECT_LENGTH as f32) + 10.0)) as i32,
-                            (self.position.y as i32) + 10,
+                            ((self.position.x - ((FRONT_RECT_LENGTH as f32) + 10.0)) as i32).abs(),
+                            (((self.position.y as i32) + 10) - 5).abs(),
                             FRONT_RECT_LENGTH,
-                            20,
+                            30,
                         )
                     }
                 }
 
                 _ => (
                     (self.position.x - ((FRONT_RECT_LENGTH as f32) + 10.0)) as i32,
-                    (self.position.y as i32) + 10,
+                    (((self.position.y as i32) + 10) - 5).abs(),
                     FRONT_RECT_LENGTH,
-                    20,
+                    30,
                 ),
             },
             Direction::East(path) => match path {
                 DirectionPath::TurnLeft => {
                     if self.position.x >= 400.0 {
                         (
-                            self.position.x as i32,
+                            (self.position.x as i32 - 5).abs(),
                             (self.position.y - (FRONT_RECT_LENGTH as f32)) as i32,
-                            20,
+                            30,
                             FRONT_RECT_LENGTH,
                         )
                     } else {
                         (
                             (self.position.x + 30.0) as i32,
-                            (self.position.y as i32) + 10,
+                            (((self.position.y as i32) + 10) - 5).abs(),
                             FRONT_RECT_LENGTH,
-                            20,
+                            30,
                         )
                     }
                 }
                 _ => (
-                    (self.position.x + 30.0) as i32,
-                    (self.position.y as i32) + 10,
+                    ((self.position.x + 30.0) as i32),
+                    (((self.position.y as i32) + 10) - 5).abs(),
                     FRONT_RECT_LENGTH,
-                    20,
+                    30,
                 ),
             },
             Direction::South(path) => match path {
                 DirectionPath::TurnLeft => {
-                    if self.position.x >= 400.0 {
+                    if self.position.y >= 400.0 {
                         (
                             (self.position.x + 30.0) as i32,
-                            (self.position.y as i32) + 10,
+                            (((self.position.y as i32) + 10) - 5).abs(),
                             FRONT_RECT_LENGTH,
-                            20,
+                            30,
                         )
                     } else {
                         (
-                            self.position.x as i32,
+                            ((self.position.x as i32) - 5).abs(),
                             (self.position.y as i32) + 40,
-                            20,
+                            30,
                             FRONT_RECT_LENGTH,
                         )
                     }
                 }
                 _ => (
-                    self.position.x as i32,
+                    ((self.position.x as i32) - 5).abs(),
                     (self.position.y as i32) + 40,
-                    20,
+                    30,
                     FRONT_RECT_LENGTH,
                 ),
             },
@@ -472,23 +520,23 @@ impl<'a> Vehicle<'a> {
                     if self.position.y <= 370.0 {
                         (
                             (self.position.x - ((FRONT_RECT_LENGTH as f32) + 10.0)) as i32,
-                            (self.position.y as i32) + 10,
+                            (((self.position.y as i32) + 10) - 5).abs(),
                             FRONT_RECT_LENGTH,
-                            20,
+                            30,
                         )
                     } else {
                         (
-                            self.position.x as i32,
+                            ((self.position.x as i32) - 5).abs(),
                             (self.position.y - (FRONT_RECT_LENGTH as f32)) as i32,
-                            20,
+                            30,
                             FRONT_RECT_LENGTH,
                         )
                     }
                 }
                 _ => (
-                    self.position.x as i32,
+                    ((self.position.x as i32) - 5).abs(),
                     (self.position.y - (FRONT_RECT_LENGTH as f32)) as i32,
-                    20,
+                    30,
                     FRONT_RECT_LENGTH,
                 ),
             },
@@ -503,7 +551,10 @@ impl<'a> Vehicle<'a> {
         for other_vehicle in other_vehicles.iter_mut() {
             if self.sensor_detection(other_vehicle) {
                 if self.is_not_at_a_safe_distance(other_vehicle) {
-                    self.close_calls.entry(self.id).or_insert(Vec::new()).push(other_vehicle.id);
+                    self.close_calls
+                        .entry(self.id)
+                        .or_insert(Vec::new())
+                        .push(other_vehicle.id);
                 }
                 if self.direction == other_vehicle.direction {
                     self.velocity = other_vehicle.velocity;
@@ -523,7 +574,7 @@ impl<'a> Vehicle<'a> {
 
     fn in_intersection(&self) -> bool {
         // Vérifier si la voiture est à l'intérieur du carré central
-        let mut square_size = 170;
+        let mut square_size = 250;
         let central_x = (800 / 2 - square_size / 2 - 4) as f32;
         let central_y = (800 / 2 - square_size / 2) as f32;
         square_size += 12;

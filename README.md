@@ -1,103 +1,98 @@
 # smart-road
+```
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
-_______________|   |   |   |   |   |   |________________
-                           |               
+_______________| ← | ↓ | → |   |   |   |________________
+                           |            ↑  
 _______________            |            ________________
-                           |               
+                           |            ←   
 _______________            |            ________________
-                           |               
+                           |            ↓   
 ___________________________|____________________________
-                           |
+               ↑           |
 _______________            |            ________________
-                           |
+               →           |
 _______________            |            ________________
-                           |
+               ↓           |
 _______________            |            ________________
+               |   |   |   | ← | ↑ | → |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
                |   |   |   |   |   |   |
-               |   |   |   |   |   |   |
+```
 
+# Smart Road Simulation
+
+Ce projet est une simulation de trafic routier en utilisant la bibliothèque SDL2 pour le rendu graphique. Les véhicules peuvent être créés et se déplacer dans différentes directions, en respectant des trajectoires spécifiques. 
+
+## Fonctionnalités
+
+- Simulation graphique de véhicules se déplaçant sur une intersection
+- Création de véhicules à l'aide des touches fléchées (haut, bas, gauche, droite)
+- Gestion des collisions et ajustement dynamique de la vitesse des véhicules
+- Affichage des statistiques des véhicules dans une fenêtre graphique
+
+## Prérequis
+
+- [Rust](https://www.rust-lang.org/) (version stable)
+- [SDL2](https://www.libsdl.org/download-2.0.php)
+- [SDL2_image](https://www.libsdl.org/projects/SDL_image/)
 
 ## Dependance
+Installer SDL2, SDL2_image et SDL2_ttf. Sur Debian, vous pouvez utiliser :
 ```bash
     sudo apt-get install libsdl2-dev
     sudo apt-get install libsdl2-image-dev
     sudo apt-get install libsdl2-ttf-dev
 ```
 
-je veux une fonction qui va permettre  de prevenir les collision entre les diferents vehicule dans le tableau avec ces informations.
-Cas de collision possible:
-- si la direction du vehicule est Direction::North(DirectionPath::TurnLeft) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::South(DirectionPath::TurnLeft),
-Direction::South(DirectionPath::GoStraight),
-Direction::West(DirectionPath::TurnLeft),
-Direction::East(DirectionPath::GoStraight),
-Direction::East(DirectionPath::TurnLeft),
-"
-- si la direction du vehicule est Direction::North(DirectionPath::GoStraight) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::South(DirectionPath::TurnLeft),
-Direction::West(DirectionPath::GoStraight),
-Direction::West(DirectionPath::TurnLeft),
-Direction::East(DirectionPath::GoStraight),
-"
+## Installation
 
-- si la direction du vehicule est Direction::South(DirectionPath::TurnLeft) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::West(DirectionPath::TurnLeft),
-Direction::West(DirectionPath::GoStraight),
-Direction::North(DirectionPath::TurnLeft),
-Direction::East(DirectionPath::GoStraight),
-Direction::East(DirectionPath::TurnLeft),
-"
+1. Cloner le dépôt :
+    ```sh
+    git clone https://github.com/betzalel75/smart-road.git
+    cd smart-road
+    ```
 
-- si la direction du vehicule est Direction::South(DirectionPath::GoStraight) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::East(DirectionPath::TurnLeft),
-Direction::East(DirectionPath::GoStraight),
-Direction::North(DirectionPath::TurnLeft),
-Direction::West(DirectionPath::GoStraight),
-"
+2. Installer les dépendances Rust :
+    ```sh
+    cargo build
+    ```
 
-- si la direction du vehicule est Direction::East(DirectionPath::TurnLeft) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::South(DirectionPath::TurnLeft),
-Direction::South(DirectionPath::GoStraight),
-Direction::West(DirectionPath::TurnLeft),
-Direction::West(DirectionPath::GoStraight),
-Direction::North(DirectionPath::TurnLeft),
-"
+## Utilisation
 
-- si la direction du vehicule est Direction::East(DirectionPath::GoStraight) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::West(DirectionPath::TurnLeft),
-Direction::South(DirectionPath::GoStraight),
-Direction::North(DirectionPath::TurnLeft),
-Direction::North(DirectionPath::GoStraight),
-"
+1. Exécuter la simulation :
+    ```sh
+    cd src
+    cargo run
+    ```
 
-- si la direction du vehicule est Direction::West(DirectionPath::TurnLeft) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::South(DirectionPath::TurnLeft),
-Direction::South(DirectionPath::GoStraight),
-Direction::East(DirectionPath::TurnLeft),
-Direction::North(DirectionPath::GoStraight),
-Direction::North(DirectionPath::TurnLeft),
-"
+2. Utiliser les touches fléchées pour créer des véhicules :
+    - `Flèche Haut` : Créer un véhicule se déplaçant vers le nord
+    - `Flèche Bas` : Créer un véhicule se déplaçant vers le sud
+    - `Flèche Gauche` : Créer un véhicule se déplaçant vers l'ouest
+    - `Flèche Droite` : Créer un véhicule se déplaçant vers l'est
+    - `Touche R` : Créer un véhicule de manière alléatoire.
 
-- si la direction du vehicule est Direction::West(DirectionPath::GoStraight) il peut entre en collision avec les vehicules qui ont ces directions
-"
-Direction::South(DirectionPath::TurnLeft),
-Direction::South(DirectionPath::GoStraight),
-Direction::East(DirectionPath::TurnLeft),
-Direction::North(DirectionPath::GoStraight),
-"
+3. Appuyer sur `Échap` pour quitter la simulation et afficher les statistiques.
 
-L'algorithme doit fonctionner de cette maniere si le vehicule peut rentrer en collision avec un vehicule devant lui il doit ralentire et le vehicule devant doit augmenter sa vitesse pour eviter la collision.
+## Structure du Projet
+
+- `src/main.rs` : Point d'entrée de l'application.
+- `src/event.rs` : Gestion des événements et logique de simulation.
+- `src/lib.rs` : Définition des structures et implémentation des méthodes pour les véhicules et les directions.
+- `assets/` : Contient les images utilisées pour les véhicules et l'intersection.
+- `src/utils/mod.rs` : Contient les fonctions utilitaires.
+
+## Contribuer
+
+Les contributions sont les bienvenues ! Veuillez ouvrir une issue ou soumettre une pull request pour toute amélioration ou suggestion.
+
+## Licence
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
