@@ -421,7 +421,7 @@ impl<'a> Vehicle<'a> {
             // Activer le mode de blending pour la transparence
             canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
 
-            canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 0, 0, 120));
+            canvas.set_draw_color(sdl2::pixels::Color::RGBA(255, 0, 0, 0));
             canvas.fill_rect(front_rect).unwrap();
         }
         canvas
