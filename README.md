@@ -54,7 +54,7 @@ Installer SDL2, SDL2_image et SDL2_ttf. Sur Debian, vous pouvez utiliser :
 
 1. Cloner le dépôt :
     ```sh
-    git clone https://github.com/betzalel75/smart-road.git
+    git clone https://github.com:Betzalel75/smart-road.git
     cd smart-road
     ```
 
