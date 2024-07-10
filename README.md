@@ -91,6 +91,7 @@ Installer SDL2, SDL2_image et SDL2_ttf. Sur Debian, vous pouvez utiliser :
 ## Auteurs
 - **Betzalel75** [Github](https://github.com/Betzalel75)
 - **DedSlash** [Github](https://github.com/DedSlash)
+- **Nasser269** [Github](https://github.com/Nasser269)
 
 
 ## Contribuer
