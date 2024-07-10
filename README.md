@@ -88,6 +88,11 @@ Installer SDL2, SDL2_image et SDL2_ttf. Sur Debian, vous pouvez utiliser :
 - `assets/` : Contient les images utilisées pour les véhicules et l'intersection.
 - `src/utils/mod.rs` : Contient les fonctions utilitaires.
 
+## Auteurs
+- **Betzalel75** [Github](https://github.com/Betzalel75)
+- **DedSlash** [Github](https://github.com/DedSlash)
+
+
 ## Contribuer
 
 Les contributions sont les bienvenues ! Veuillez ouvrir une issue ou soumettre une pull request pour toute amélioration ou suggestion.
